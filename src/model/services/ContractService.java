@@ -1,29 +1,30 @@
 package model.services;
 
-import java.util.Calendar;
-import java.util.Date;
+import java.time.LocalDate;
 
 import model.entities.Contract;
 import model.entities.Installment;
 
 public class ContractService {
 
-	private OnlinePaymentService paymentService;
+	private OnlinePaymentService onlinePaymentService;
+
+	public ContractService(OnlinePaymentService paymentService) {
+		this.onlinePaymentService = paymentService;
+	}
 	
-	public void processContract(Contract contract, Integer months, OnlinePaymentService onlinePaymentService) {
-		this.paymentService = onlinePaymentService;
-		double valuePerMonth = contract.getTotalValue() / months;
+	public void processContract(Contract contract, int months) {
 		
-		Calendar cal = Calendar.getInstance();
+		double basicQuota = contract.getTotalValue() / months;
+		
 		for (int i = 1; i <= months; i++) {
-			cal.setTime(contract.getDate());
-			cal.add(Calendar.MONTH, i);
-			Date nextMonth = cal.getTime(); // Sempre lembre de fazer o getTime() para usar a nova data.
+			LocalDate dueDate = contract.getDate().plusMonths(i);
+
+			double interest = onlinePaymentService.interest(basicQuota, i);			
+			double fee = onlinePaymentService.paymentFee(basicQuota + interest);			
+			double quota = basicQuota + interest + fee;
 			
-			double interest = paymentService.interest(valuePerMonth, i);
-			double fee = paymentService.paymentFee(interest);
-			
-			contract.addInstallment(new Installment(nextMonth, interest + fee));
+			contract.getInstallments().add(new Installment(dueDate, quota));
 		}
 	}
 }

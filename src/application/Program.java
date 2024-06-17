@@ -2,7 +2,8 @@ package application;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -18,26 +19,27 @@ public class Program {
 		Locale.setDefault(Locale.US);
 		Scanner sc = new Scanner(System.in);
 		
-		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+		DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 		
 		System.out.println("Entre os dados do contrato:");
 		System.out.print("Numero: ");
 		int number = sc.nextInt();
 		System.out.print("Data (dd/MM/yyyy): ");
-		sc.nextLine();
-		Date date = sdf.parse(sc.next());
+		LocalDate date = LocalDate.parse(sc.next(), fmt);
 		System.out.print("Valor do contrato: ");
-		double amount = sc.nextDouble();
-		System.out.print("Entre com o numero de parcelas: ");
-		int installments = sc.nextInt();
+		double totalValue = sc.nextDouble();
 		
-		Contract contract = new Contract(number, date, amount);
-		ContractService cs = new ContractService();
-		cs.processContract(contract, installments, new PaypalService());
+		Contract obj = new Contract(number, date, totalValue);
+		
+		System.out.print("Entre com o numero de parcelas: ");
+		int n = sc.nextInt();
+		
+		ContractService contractService = new ContractService(new PaypalService());
+		contractService.processContract(obj, n);
 		
 		System.out.println("Parcelas:");
-		for (Installment i : contract.getInstallments()) {
-			System.out.println(sdf.format(i.getDueDate()) + " " + String.format("%.2f", i.getAmount()));
+		for (Installment installment : obj.getInstallments()) {
+			System.out.println(installment);
 		}
 		
 		sc.close();
